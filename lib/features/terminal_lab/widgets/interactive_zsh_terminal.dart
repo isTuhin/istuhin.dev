@@ -140,20 +140,24 @@ class _InteractiveZshTerminalState extends State<InteractiveZshTerminal>
     )..addListener(_tickParticles);
     _inputController.addListener(_handleInputChanged);
     widget.controller.addListener(_handleControllerChanged);
+    widget.controller.attachFocusHandler(_focusTerminalInput);
   }
 
   @override
   void didUpdateWidget(covariant InteractiveZshTerminal oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.controller != widget.controller) {
+      oldWidget.controller.detachFocusHandler(_focusTerminalInput);
       oldWidget.controller.removeListener(_handleControllerChanged);
       _lastFocusRequestId = widget.controller.focusRequestId;
       widget.controller.addListener(_handleControllerChanged);
+      widget.controller.attachFocusHandler(_focusTerminalInput);
     }
   }
 
   @override
   void dispose() {
+    widget.controller.detachFocusHandler(_focusTerminalInput);
     widget.controller.removeListener(_handleControllerChanged);
     _inputController.removeListener(_handleInputChanged);
     _fireTicker.dispose();
@@ -296,11 +300,13 @@ class _InteractiveZshTerminalState extends State<InteractiveZshTerminal>
   void _handleControllerChanged() {
     if (widget.controller.focusRequestId != _lastFocusRequestId) {
       _lastFocusRequestId = widget.controller.focusRequestId;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          _inputFocusNode.requestFocus();
-        }
-      });
+      if (!_inputFocusNode.hasFocus) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            _focusTerminalInput();
+          }
+        });
+      }
     }
     _scrollToBottom();
   }
@@ -319,6 +325,7 @@ class _InteractiveZshTerminalState extends State<InteractiveZshTerminal>
 
   void _focusTerminalInput() {
     _inputFocusNode.requestFocus();
+    SystemChannels.textInput.invokeMethod<void>('TextInput.show');
   }
 
   void _submitCommand(String value) {

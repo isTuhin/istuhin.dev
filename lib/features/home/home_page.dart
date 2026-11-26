@@ -133,8 +133,9 @@ class _HomePageState extends State<HomePage> {
     final tokens = GlassTokens.of(context);
     final horizontalPad = tokens.pageHorizontalPadding;
     final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
-    final bottomPad =
-        keyboardInset + tokens.capsuleHeight + (56 * tokens.scale);
+    final bottomPad = keyboardInset > 0
+        ? keyboardInset + (24 * tokens.scale)
+        : tokens.capsuleHeight + (56 * tokens.scale);
 
     return SafeArea(
       top: false,

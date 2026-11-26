@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -44,6 +45,7 @@ class _AppShellState extends State<AppShell> {
   int _index = GlassBottomNav.homePageIndex;
   int _previousNonSettingsIndex = GlassBottomNav.homePageIndex;
   bool _isScrolled = false;
+  final Set<int> _visitedTabs = <int>{GlassBottomNav.homePageIndex};
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
   late PortfolioController _portfolioController;
@@ -114,6 +116,7 @@ class _AppShellState extends State<AppShell> {
         _previousNonSettingsIndex = _index;
       }
       _index = targetIndex;
+      _visitedTabs.add(targetIndex);
       _isScrolled = false;
       _searchQuery = '';
     });
@@ -182,48 +185,64 @@ class _AppShellState extends State<AppShell> {
       ),
     ];
 
-    return ListenableBuilder(
-      listenable: _portfolioController,
-      builder: (context, _) {
-        return GlassPage(
-          statusBarStyle: GlassStatusBarStyle.auto,
-          child: Scaffold(
-            backgroundColor: background,
-            extendBody: !isDesktop,
-            resizeToAvoidBottomInset: false,
-            body: ColoredBox(
-              color: background,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  if (showTopPortfolioBar)
-                    PortfolioAppBar(
-                      config: _portfolioController.config,
-                      isScrolled: _isScrolled,
-                      onBrandTap: () => _handleDestinationSelected(
-                        GlassBottomNav.homePageIndex,
-                      ),
-                      trailingNav: isDesktop ? navBar : null,
-                    ),
-                  Expanded(
-                    child: NotificationListener<ScrollNotification>(
-                      onNotification: _handleScrollNotification,
-                      child: GlassScrollEdgeEffect(
-                        fadeColor: background,
-                        topFadeHeight: 0,
-                        bottomFadeHeight: bottomFadeHeight,
-                        style: GlassScrollEdgeStyle.soft,
-                        child: IndexedStack(index: _index, children: pages),
-                      ),
-                    ),
-                  ),
-                ],
+    final bodyContent = IndexedStack(
+      index: _index,
+      children: [
+        for (var i = 0; i < pages.length; i++)
+          if (_visitedTabs.contains(i))
+            RepaintBoundary(
+              child: TickerMode(
+                enabled: i == _index,
+                child: pages[i],
               ),
-            ),
-            bottomNavigationBar: isDesktop ? null : navBar,
+            )
+          else
+            const SizedBox.shrink(),
+      ],
+    );
+
+    return GlassPage(
+      statusBarStyle: GlassStatusBarStyle.auto,
+      child: Scaffold(
+        backgroundColor: background,
+        extendBody: !isDesktop,
+        resizeToAvoidBottomInset: false,
+        body: ColoredBox(
+          color: background,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (showTopPortfolioBar)
+                ListenableBuilder(
+                  listenable: _portfolioController,
+                  builder: (context, _) => PortfolioAppBar(
+                    config: _portfolioController.config,
+                    isScrolled: _isScrolled,
+                    onBrandTap: () => _handleDestinationSelected(
+                      GlassBottomNav.homePageIndex,
+                    ),
+                    trailingNav: isDesktop ? navBar : null,
+                  ),
+                ),
+              Expanded(
+                child: NotificationListener<ScrollNotification>(
+                  onNotification: _handleScrollNotification,
+                  child: (kIsWeb || isDesktop)
+                      ? bodyContent
+                      : GlassScrollEdgeEffect(
+                          fadeColor: background,
+                          topFadeHeight: 0,
+                          bottomFadeHeight: bottomFadeHeight,
+                          style: GlassScrollEdgeStyle.soft,
+                          child: bodyContent,
+                        ),
+                ),
+              ),
+            ],
           ),
-        );
-      },
+        ),
+        bottomNavigationBar: isDesktop ? null : navBar,
+      ),
     );
   }
 }

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -53,7 +54,7 @@ class _GlassBentoCardState extends State<GlassBentoCard>
       parent: _borderController,
       curve: Curves.easeOutCubic,
     );
-    if (widget.animateBorder) {
+    if (widget.animateBorder && !kIsWeb) {
       _borderController.forward();
     } else {
       _borderController.value = 1.0;
@@ -104,6 +105,11 @@ class _GlassBentoCardState extends State<GlassBentoCard>
             (restingAlpha + (peakBoost * pulseWave)).clamp(0.14, 0.90);
         final rimColor = baseAccent.withValues(alpha: rimAlpha);
 
+        final side = BorderSide(
+          color: rimColor,
+          width: highlighted ? tokens.rimWidth * 1.35 : tokens.rimWidth,
+        );
+
         return AnimatedContainer(
           duration: disableAnimations
               ? Duration.zero
@@ -112,13 +118,15 @@ class _GlassBentoCardState extends State<GlassBentoCard>
           padding: widget.padding ?? EdgeInsets.all(16 * tokens.scale),
           decoration: ShapeDecoration(
             color: fill,
-            shape: LiquidRoundedSuperellipse(
-              borderRadius: radius,
-              side: BorderSide(
-                color: rimColor,
-                width: highlighted ? tokens.rimWidth * 1.35 : tokens.rimWidth,
-              ),
-            ),
+            shape: kIsWeb
+                ? RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(radius),
+                    side: side,
+                  )
+                : LiquidRoundedSuperellipse(
+                    borderRadius: radius,
+                    side: side,
+                  ),
           ),
           child: child,
         );

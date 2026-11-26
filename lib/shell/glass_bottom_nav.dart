@@ -198,15 +198,16 @@ class _GlassBottomNavState extends State<GlassBottomNav> {
               onMicTap: widget.onMicTap,
               onCloseSearch: _handleCloseSearch,
             )
-          : GlassTabBar.bottom(
-              key: const ValueKey('bottom-tab-bar'),
-              selectedIndex: _capsuleSelectedIndex,
-              showIndicator: true,
-              onTabSelected: (index) {
-                widget.onDestinationSelected(
-                  GlassBottomNav.mainPageIndexes[index],
-                );
-              },
+          : RepaintBoundary(
+              child: GlassTabBar.bottom(
+                key: const ValueKey('bottom-tab-bar'),
+                selectedIndex: _capsuleSelectedIndex,
+                showIndicator: true,
+                onTabSelected: (index) {
+                  widget.onDestinationSelected(
+                    GlassBottomNav.mainPageIndexes[index],
+                  );
+                },
               selectedIconColor: tokens.selectedIcon,
               unselectedIconColor: tokens.idleIcon,
               indicatorColor: tokens.selectionPill,
@@ -254,6 +255,7 @@ class _GlassBottomNavState extends State<GlassBottomNav> {
                 ),
               ),
             ),
+            ),
     );
   }
 
@@ -272,9 +274,14 @@ class _GlassBottomNavState extends State<GlassBottomNav> {
 
     final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
     final isKeyboardVisible = keyboardInset > 0;
+    final hideForKeyboard = isKeyboardVisible && !_isSearchActive;
     final bottomGap = isKeyboardVisible
         ? keyboardInset + (8 * tokens.scale)
         : tokens.barBottomInset;
+
+    if (hideForKeyboard) {
+      return const SizedBox.shrink();
+    }
 
     return SafeArea(
       top: false,

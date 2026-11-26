@@ -79,6 +79,7 @@ logs/
 tmp/
 temp/
 .cache/
+.firebase/
 
 # Local databases / uploads
 *.sqlite

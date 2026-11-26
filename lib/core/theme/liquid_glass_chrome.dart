@@ -55,7 +55,7 @@ abstract final class AppLiquidGlass {
     frostOpacity: kIsWeb ? 0.08 : 0.20,
     frostWeight: kIsWeb ? 0.18 : 0.32,
     frostClamp: kIsWeb ? 0.14 : 0.26,
-    blur: 18,
+    blur: kIsWeb ? 10 : 18,
     blurWeight: 0.85,
     bodyShade: kIsWeb ? 0.06 : 0.20,
     thickness: 20,

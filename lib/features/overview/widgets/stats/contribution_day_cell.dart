@@ -63,29 +63,8 @@ class ContributionDayCell extends StatelessWidget {
 
     return Semantics(
       label: tooltip,
-      child: Tooltip(
-        message: tooltip,
-        preferBelow: false,
-        verticalOffset: cellPx + 4,
-        textStyle: TextStyle(
-          color: tokens.isDark ? Colors.white : Colors.black,
-          fontSize: 10 * tokens.scale,
-          fontFamily: GlassTokens.fontMain,
-        ),
-        decoration: BoxDecoration(
-          color: tokens.isDark
-              ? const Color(0xFF1F242C)
-              : const Color(0xFFF3F4F6),
-          borderRadius: BorderRadius.circular(4 * tokens.scale),
-          border: Border.all(color: tokens.fieldRim, width: 0.8),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.18),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
         child: GestureDetector(
           onTap: () => AppGlassOverlays.showToast(context, message: tooltip),
           child: box,

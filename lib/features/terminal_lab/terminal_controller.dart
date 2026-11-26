@@ -53,6 +53,7 @@ class TerminalController extends ChangeNotifier {
   final List<TerminalOutputEntry> _entries = [];
   final List<String> _history = [];
   int _focusRequestId = 0;
+  VoidCallback? _focusHandler;
 
   PortfolioConfig get _liveConfig =>
       portfolioController?.config ?? PortfolioConfig.istuhinDev;
@@ -64,8 +65,22 @@ class TerminalController extends ChangeNotifier {
   List<String> get history => List.unmodifiable(_history);
   int get focusRequestId => _focusRequestId;
 
+  /// Registers a synchronous focus handler (needed by mobile web to open the
+  /// soft keyboard within the user's tap gesture).
+  void attachFocusHandler(VoidCallback handler) {
+    _focusHandler = handler;
+  }
+
+  /// Unregisters the synchronous focus handler when the terminal unmounts.
+  void detachFocusHandler(VoidCallback handler) {
+    if (_focusHandler == handler) {
+      _focusHandler = null;
+    }
+  }
+
   /// Requests that the active terminal input field scroll into view and gain focus.
   void requestFocus() {
+    _focusHandler?.call();
     _focusRequestId++;
     notifyListeners();
   }
