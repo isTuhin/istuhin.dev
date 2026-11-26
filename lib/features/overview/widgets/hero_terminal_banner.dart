@@ -19,10 +19,14 @@ class HeroTerminalBanner extends StatelessWidget {
     super.key,
     required this.terminalController,
     this.config = PortfolioConfig.istuhinDev,
+    this.terminalKey,
   });
 
   final TerminalController terminalController;
   final PortfolioConfig config;
+  /// When supplied, this key is placed on the [InteractiveZshTerminal] widget
+  /// so [Scrollable.ensureVisible] can scroll it fully above the mobile keyboard.
+  final GlobalKey? terminalKey;
 
   @override
   Widget build(BuildContext context) {
@@ -30,6 +34,7 @@ class HeroTerminalBanner extends StatelessWidget {
     final introBlock = _HeroCodeIdentityBlock(config: config);
     final terminalBlock = config.terminalEnabled
         ? InteractiveZshTerminal(
+            key: terminalKey,
             controller: terminalController,
             windowTitle: '${config.brand} — ~ — -zsh',
             promptLabel: config.brand,

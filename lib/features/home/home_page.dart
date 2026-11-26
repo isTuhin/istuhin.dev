@@ -42,6 +42,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final ScrollController _scrollController = ScrollController();
+  final GlobalKey _terminalKey = GlobalKey();
   late TerminalController _terminalController;
   bool _ownsTerminalController = false;
   late GitHubStats _fallbackStats;
@@ -74,13 +75,38 @@ class _HomePageState extends State<HomePage> {
   void _handleTerminalChanged() {
     if (_terminalController.focusRequestId == _lastFocusRequestId) return;
     _lastFocusRequestId = _terminalController.focusRequestId;
-    if (_scrollController.hasClients && _scrollController.offset > 0) {
-      _scrollController.animateTo(
-        0,
-        duration: const Duration(milliseconds: 240),
-        curve: Curves.easeOutCubic,
-      );
-    }
+    // Wait one frame for the keyboard to report its inset, then
+    // ensure the full terminal container is visible above it.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final ctx = _terminalKey.currentContext;
+      if (ctx != null) {
+        final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
+        Scrollable.ensureVisible(
+          ctx,
+          duration: const Duration(milliseconds: 280),
+          curve: Curves.easeOutCubic,
+          alignmentPolicy: ScrollPositionAlignmentPolicy.keepVisibleAtStart,
+          // Extra padding beneath the terminal so the keyboard doesn't
+          // cover any part of it.
+          alignment: keyboardInset > 0 ? 0.0 : 0.0,
+        );
+        // Fallback: also scroll to top if no keyboard (search tap from top).
+        if (keyboardInset == 0 && _scrollController.hasClients) {
+          _scrollController.animateTo(
+            0,
+            duration: const Duration(milliseconds: 240),
+            curve: Curves.easeOutCubic,
+          );
+        }
+      } else if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          0,
+          duration: const Duration(milliseconds: 240),
+          curve: Curves.easeOutCubic,
+        );
+      }
+    });
   }
 
   @override
@@ -133,7 +159,8 @@ class _HomePageState extends State<HomePage> {
     final tokens = GlassTokens.of(context);
     final horizontalPad = tokens.pageHorizontalPadding;
     final keyboardInset = MediaQuery.viewInsetsOf(context).bottom;
-    final bottomPad = keyboardInset > 0
+    final isKeyboardOpen = keyboardInset > 0;
+    final bottomPad = isKeyboardOpen
         ? keyboardInset + (24 * tokens.scale)
         : tokens.capsuleHeight + (56 * tokens.scale);
 
@@ -159,9 +186,12 @@ class _HomePageState extends State<HomePage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    HeroTerminalBanner(
-                      config: config,
-                      terminalController: _terminalController,
+                    KeyedSubtree(
+                      key: _terminalKey,
+                      child: HeroTerminalBanner(
+                        config: config,
+                        terminalController: _terminalController,
+                      ),
                     ),
                     SizedBox(height: 36 * tokens.scale),
                     const GlassSectionHeader(
